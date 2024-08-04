@@ -5,14 +5,16 @@ SCENE_TITLE = 0
 SCENE_PLAY = 1
 SCENE_GAMEOVER = 2
 
+maze = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0], [1,1,1,1,1,1,1,1,1,1,1,1,1,0,0], [1,0,0,0,0,0,0,1,1,0,0,0,0,0,1], [1,0,1,1,1, 1,0,1,1,0,0,0,1,0,1], [1,0,1,0,0,1,0,0,0,0,0,0,1,0,1], [1,0,0,0,0,1,0,1,0,1,1,1,0,0,1], [1,1,1,1,0,1,0,1,0,1,0,0,1,1,1] , [1,1,1,1,0,1,0,1,0,1,0,1,1,1,1], [1,0,0,0,0,0,0,0,0,0,0,0,0,0,1], [1,0,1,1,1,1,1,1,0,0,0,1,0,0,1] , [1,0,1,0,0,0,0,0,1,1,0,1,0,0,1], [1,0,1,0,1,1,1,1,0,1,1,0,1,0,1], [1,0,0,0,0,0,0,0,0,1,1,0,0,0,1], [1,0,0,1,1,1,1,1,1,1,1,1,1,1,1]]
+
 class Game:
     def __init__(self):
         pyxel.init(128, 128, title="Maze Adventure Game")
         pyxel.load("my_resource.pyxres")
         pyxel.mouse(True)
     
-        self.player = Player(10, 120, 24, 0, pyxel.tilemaps[0])  # Coordinates for the player sprite
-        self.grogu = Grogu(15, 25, 'grogu', 0, 0)
+        self.player = Player(10, 120, 24, 8, pyxel.tilemaps[0])  # Coordinates for the player sprite
+        self.items= [Grogu(15, 25, 'grogu', 0, 0), Droid1(45,80, "droid1", 24, 24), Droid2(90,113, "droid2", 48,16) ]
         self.obstacles = [Stormtrooper(90, 90, 'patrol', 8, 16), Stormtrooper(50, 50, 'patrol', 8, 16), Stormtrooper(20, 30, 'patrol', 8, 16), Stormtrooper(20, 80, 'patrol', 8, 16)]  # Coordinates for the obstacle sprite
         self.maze = Maze(pyxel.tilemaps[0])
         self.ui = UI()
@@ -44,15 +46,19 @@ class Game:
         mouse_x = pyxel.mouse_x
         mouse_y = pyxel.mouse_y
         
-        if self.grogu.is_clicked(mouse_x, mouse_y):
-            self.grogu.pick_up()
-
+        for item in self.items:
+            print(item.x, self.player.x)
+            print(item.y, self.player.y)
+            if item.is_clicked(mouse_x, mouse_y) and (item.x <= self.player.x <= item.x + 16 and
+                item.y <= self.player.y <= item.y + 16):
+                item.pick_up()
+                
 
     def check_win_condition(self):
-        if (self.player.x >= 105 and self.player.x <= 120) and (self.player.y >= 8 and self.player.y <= 15) and (self.grogu.picked_up):
+        all_picked_up = all(item.picked_up for item in self.items)
+        if (self.player.x >= 105 and self.player.x <= 120) and (self.player.y >= 8 and self.player.y <= 15) and all_picked_up:
             self.game_state = "win"
             self.scene = SCENE_GAMEOVER
-            # add change of screens
 
     def update(self):
         
@@ -78,7 +84,8 @@ class Game:
                 obstacle.move_randomly(self.maze)
                 if self.player.check_collision(obstacle):
                     self.lives -= 1
-                    if self.lives <= 0:
+                    print("lives;" , self.lives)
+                    if self.lives == 0:
                         self.game_state = "game over" 
                         self.scene = SCENE_GAMEOVER
                   
@@ -89,8 +96,9 @@ class Game:
         
         if pyxel.btnp(pyxel.KEY_RETURN):
             self.scene = SCENE_PLAY
-            self.player = Player(10, 120, 24, 0, pyxel.tilemaps[0])  # Coordinates for the player sprite
-            self.grogu = Grogu(15, 25, 'grogu', 0, 0)
+            self.player = Player(10, 120, 24, 8, pyxel.tilemaps[0])  # Coordinates for the player sprite
+       
+            self.items= [Grogu(15, 25, 'grogu', 0, 0), Droid1(50,50, "droid1", 32, 16), Droid2(100,100, "droid2", 48,16) ]
             self.obstacles = [Stormtrooper(90, 90, 'patrol', 8, 16), Stormtrooper(50, 50, 'patrol', 8, 16), Stormtrooper(20, 30, 'patrol', 8, 16), Stormtrooper(20, 80, 'patrol', 8, 16)]  # Coordinates for the obstacle sprite
             self.maze = Maze(pyxel.tilemaps[0])
             self.ui = UI()
@@ -120,11 +128,12 @@ class Game:
          
         self.maze.draw()
         self.player.draw()
-        self.grogu.draw()
+        
+        for item in self.items:
+            item.draw()
             
         for obstacle in self.obstacles:
             obstacle.draw()
-        self.ui.update_life_counter(self.lives)
         self.ui.update_timer(self.timer)
        
         
@@ -134,7 +143,9 @@ class Game:
 
             pyxel.text(50, 50, "You Won!", 3)
             self.player.draw_at(50, 60)  # Draw player at specified location
-            self.grogu.draw_at(60, 60) 
+            self.items[0].draw_at(60, 60) 
+            self.items[1].draw_at(70, 60)
+            self.items[2].draw_at(80, 60)
             
         elif self.game_state == "game over":
             pyxel.text(40, 50, "GAME OVER! ", 8)
@@ -150,8 +161,15 @@ class Player:
         self.tilemap = tilemap
 
     def move(self, dx, dy):
-        self.x = self.x + dx
-        self.y = self.y + dy
+   
+        new_x = self.x + dx
+        new_y = self.y + dy
+    
+        if new_x >= 0 and new_x  <= 120: 
+            self.x = new_x
+            
+        if new_y >= 13 and new_y <= 120:
+            self.y = new_y
       
     def draw(self):
         pyxel.blt(self.x, self.y, 0, self.u, self.v, 16, 16, pyxel.COLOR_BLACK)  # Adjust width and height as necessary
@@ -183,8 +201,60 @@ class Grogu:
          
     def pick_up(self):
         if not self.picked_up:
+            self.x = 125
+            self.y = 5
+            self.picked_up = True
+            pyxel.play(3, 1)
+
+    def draw(self):
+        pyxel.blt(self.x, self.y, 0, self.u, self.v, 16, 16, pyxel.COLOR_BLACK)  # Adjust width and height as necessary
+        
+    def draw_at(self, x, y):
+        pyxel.blt(x, y, 0, self.u, self.v, 16, 16, pyxel.COLOR_BLACK)  # Draw at specified coordinates
+
+class Droid1:
+    def __init__(self, x, y, type, u, v):
+        self.x = x
+        self.y = y
+        self.type = type
+        self.u = u  # Sprite x-coordinate in the tilemap
+        self.v = v  # Sprite y-coordinate in the tilemap
+        self.picked_up = False
+        
+    def is_clicked(self, mouse_x, mouse_y):
+        return (self.x <= mouse_x <= self.x + 16 and
+                self.y <= mouse_y <= self.y + 16)
+         
+    def pick_up(self):
+        if not self.picked_up:
             self.x = 120
-            self.y = 10
+            self.y = 5
+            self.picked_up = True
+            pyxel.play(3, 1)
+
+    def draw(self):
+        pyxel.blt(self.x, self.y, 0, self.u, self.v, 16, 16, pyxel.COLOR_BLACK)  # Adjust width and height as necessary
+        
+    def draw_at(self, x, y):
+        pyxel.blt(x, y, 0, self.u, self.v, 16, 16, pyxel.COLOR_BLACK)  # Draw at specified coordinates
+
+class Droid2:
+    def __init__(self, x, y, type, u, v):
+        self.x = x
+        self.y = y
+        self.type = type
+        self.u = u  # Sprite x-coordinate in the tilemap
+        self.v = v  # Sprite y-coordinate in the tilemap
+        self.picked_up = False
+        
+    def is_clicked(self, mouse_x, mouse_y):
+        return (self.x <= mouse_x <= self.x + 16 and
+                self.y <= mouse_y <= self.y + 16)
+         
+    def pick_up(self):
+        if not self.picked_up:
+            self.x = 115
+            self.y = 5
             self.picked_up = True
             pyxel.play(3, 1)
 
@@ -207,9 +277,10 @@ class Stormtrooper:
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         random.shuffle(directions)  # Randomize directions
         for dx, dy in directions:
-            self.x = self.x + (dx *2 )
-            self.y = self.y + (dy *2)
-            break  # Move in the first valid random direction
+            speed = pyxel.rndi(1, 3)   
+            self.x = self.x + (dx * speed)
+            self.y = self.y + (dy * speed)
+            break  
 
     def draw(self):
         pyxel.blt(self.x, self.y, 0, self.u, self.v, 16, 16, pyxel.COLOR_BLACK)  # Adjust width and height as necessary
@@ -222,18 +293,13 @@ class Maze:
     def draw(self):
         pyxel.bltm(0, 0, 0, 0, 0, 128, 128)  # Adjust width and height as necessary
 
-
-
 class UI:
     def __init__(self):
         self.life_counter = 3
         self.timer = 0.0
 
-    def update_life_counter(self, lives):
-        pyxel.text(5, 5, f"Energy: {lives}", 5)
-
     def update_timer(self, time):
-        pyxel.text(50, 5, f"Timer: {int(time)}", 5)
+        pyxel.text(10, 5, f"Timer: {int(time)}", 10)
 
 
 # Start the game
