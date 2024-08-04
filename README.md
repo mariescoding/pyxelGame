@@ -1,6 +1,6 @@
 # Death Star Escape
 
-![Death Star Escape](game/screen.png)
+![Death Star Escape](screen.png)
 
 Death Star Escape is an engaging maze adventure game developed using Pyxel. The objective of the game is to navigate through the maze, collect all the items (Grogu, Droid1, and Droid2), and avoid the Stormtroopers. The game features unique behaviors for each collectible item, enhancing the gameplay experience.
 
