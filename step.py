@@ -270,17 +270,24 @@ class Stormtrooper:
         self.x = x
         self.y = y
         self.pattern = pattern
-        self.u = u  # Sprite x-coordinate in the tilemap
-        self.v = v  # Sprite y-coordinate in the tilemap
+        self.u = u  
+        self.v = v  
+  
+        angle = pyxel.rndi(30, 150)
+        self.dx = pyxel.cos(angle)
+        self.dy = pyxel.sin(angle)
         
     def move_randomly(self, maze):
-        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-        random.shuffle(directions)  # Randomize directions
-        for dx, dy in directions:
-            speed = pyxel.rndi(1, 3)   
-            self.x = self.x + (dx * speed)
-            self.y = self.y + (dy * speed)
-            break  
+        
+        if self.x < -10 or self.x + 16 > 150:
+            self.dx *= -1
+            
+        if self.y < 20 or self.y+ 16 > 110:
+            self.dy *= -1
+
+        self.x += self.dx * 0.8
+        self.y += self.dy * 0.8
+    
 
     def draw(self):
         pyxel.blt(self.x, self.y, 0, self.u, self.v, 16, 16, pyxel.COLOR_BLACK)  # Adjust width and height as necessary
